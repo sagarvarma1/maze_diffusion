@@ -75,19 +75,19 @@ class GaussianDiffusion:
         else:
             raise ValueError(f"Unknown schedule: {schedule}")
         
-        # Pre-compute useful values
+        # Pre-compute useful values (move everything to device)
         self.betas = betas.to(device)
-        self.alphas = 1.0 - self.betas
-        self.alphas_cumprod = torch.cumprod(self.alphas, dim=0)
-        self.alphas_cumprod_prev = torch.cat([torch.tensor([1.0]).to(device), self.alphas_cumprod[:-1]])
+        self.alphas = (1.0 - self.betas).to(device)
+        self.alphas_cumprod = torch.cumprod(self.alphas, dim=0).to(device)
+        self.alphas_cumprod_prev = torch.cat([torch.tensor([1.0], device=device), self.alphas_cumprod[:-1]]).to(device)
         
         # Calculations for forward process (adding noise)
-        self.sqrt_alphas_cumprod = torch.sqrt(self.alphas_cumprod)
-        self.sqrt_one_minus_alphas_cumprod = torch.sqrt(1.0 - self.alphas_cumprod)
+        self.sqrt_alphas_cumprod = torch.sqrt(self.alphas_cumprod).to(device)
+        self.sqrt_one_minus_alphas_cumprod = torch.sqrt(1.0 - self.alphas_cumprod).to(device)
         
         # Calculations for reverse process (denoising)
-        self.sqrt_recip_alphas = torch.sqrt(1.0 / self.alphas)
-        self.posterior_variance = betas * (1.0 - self.alphas_cumprod_prev) / (1.0 - self.alphas_cumprod)
+        self.sqrt_recip_alphas = torch.sqrt(1.0 / self.alphas).to(device)
+        self.posterior_variance = (self.betas * (1.0 - self.alphas_cumprod_prev) / (1.0 - self.alphas_cumprod)).to(device)
     
     def q_sample(self, x_start: torch.Tensor, t: torch.Tensor, noise: Optional[torch.Tensor] = None) -> torch.Tensor:
         """
