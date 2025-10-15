@@ -229,11 +229,14 @@ class GaussianDiffusion:
         # Start from pure noise
         img = torch.randn(shape, device=device)
         
+        # Create iterator (with or without progress bar)
         if progress:
             from tqdm import tqdm
-            timesteps = tqdm(timesteps, desc='DDIM Sampling')
+            timesteps_iter = tqdm(timesteps, desc='DDIM Sampling')
+        else:
+            timesteps_iter = timesteps
         
-        for i, t_idx in enumerate(timesteps):
+        for i, t_idx in enumerate(timesteps_iter):
             t = torch.full((batch_size,), t_idx, device=device, dtype=torch.long)
             
             # Get model prediction

@@ -10,7 +10,7 @@ from typing import Tuple, List
 
 def generate_simple_maze(size: int = 32) -> Tuple[np.ndarray, np.ndarray]:
     """
-    Generate a simple maze with solution using recursive backtracking.
+    Generate a simple maze with solution using iterative backtracking.
     
     Args:
         size: Maze size (default 32x32 pixels)
@@ -27,14 +27,18 @@ def generate_simple_maze(size: int = 32) -> Tuple[np.ndarray, np.ndarray]:
     # Make it larger to have room for walls between cells
     maze_grid = np.zeros((grid_size * 2 + 1, grid_size * 2 + 1), dtype=np.float32)
     
-    # Recursive backtracking to carve maze
-    def carve(x, y):
-        maze_grid[y, x] = 1.0  # Mark as path
+    # Iterative backtracking to carve maze (avoids recursion limit)
+    stack = [(1, 1)]
+    maze_grid[1, 1] = 1.0  # Mark start as path
+    
+    while stack:
+        x, y = stack[-1]
         
         # Random directions
         directions = [(0, -2), (2, 0), (0, 2), (-2, 0)]
         random.shuffle(directions)
         
+        found = False
         for dx, dy in directions:
             nx, ny = x + dx, y + dy
             
@@ -44,10 +48,16 @@ def generate_simple_maze(size: int = 32) -> Tuple[np.ndarray, np.ndarray]:
                 
                 # Carve path between cells
                 maze_grid[y + dy // 2, x + dx // 2] = 1.0
-                carve(nx, ny)
-    
-    # Start carving from (1, 1)
-    carve(1, 1)
+                maze_grid[ny, nx] = 1.0
+                
+                # Add new cell to stack
+                stack.append((nx, ny))
+                found = True
+                break
+        
+        if not found:
+            # Backtrack
+            stack.pop()
     
     # Add entrance and exit
     maze_grid[1, 0] = 1.0  # Left entrance
